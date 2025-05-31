@@ -16,7 +16,7 @@ typedef struct {
     bool press;
     bool rel;
 } BtnState;
-BtnState btnStateB;
+BtnState btnStateFire;
 
 typedef struct {
     u32 cur;
@@ -94,23 +94,9 @@ bool Player_IsFirstPersonHookshot(Player* this, PlayState* play) {
         );
 }
 
-bool ShouldAllowRFiring(Player* this, PlayState* play) {
-    RFiringBehavior bow_r = recomp_get_config_u32("bow-fire-with-r");
-    RFiringBehavior hookshot_r = recomp_get_config_u32("hookshot-fire-with-r");
-    return (
-        (bow_r == FIRST_PERSON && Player_IsFirstPersonBow(this, play))
-        || (bow_r == AIMING && Player_IsAimingBow(this, play))
-        || (bow_r == HOLDING && Player_isHoldingBow(this))
-        || (hookshot_r == FIRST_PERSON && Player_IsFirstPersonHookshot(this, play))
-        || (hookshot_r == AIMING && Player_IsAimingHookshot(this, play))
-        || (hookshot_r == HOLDING && Player_IsHoldingHookshot(this))
-    );
-}
-
-
-bool ShouldAllowBFiring(Player* this, PlayState* play) {
-    RFiringBehavior bow_b = recomp_get_config_u32("bow-fire-with-b");
-    RFiringBehavior hookshot_b = recomp_get_config_u32("hookshot-fire-with-b");
+bool ShouldAllowOverrideFiring(Player* this, PlayState* play) {
+    RFiringBehavior bow_b = recomp_get_config_u32("first-person-bow-control");
+    RFiringBehavior hookshot_b = recomp_get_config_u32("first-person-hookshot-control");
     return (
         (bow_b == FIRST_PERSON && Player_IsFirstPersonBow(this, play))
         || (bow_b == AIMING && Player_IsAimingBow(this, play))
@@ -146,23 +132,43 @@ void MouseState_Update(MouseBtnState* m) {
     // If held now but now prev, pressed.
     m->press = new_cur & ~m->prev;
 
-    // update current:
+    // update cur:
     m->cur = new_cur;
 }
 
-RECOMP_HOOK("Player_Update") void pre_Player_UpdateCommon(Player* this, PlayState* play) {
-    MouseState_Update(&mouseBtnState);
-    recomp_printf("mouseBtnState: cur=%i, press=%i, prev=%i, rel=%i\n", mouseBtnState.cur, mouseBtnState.press, mouseBtnState.prev, mouseBtnState.rel);
+void BtnState_MouseRecord(MouseBtnState* m, BtnState* state, u16 btn) {
+    state->cur = m->cur & btn;
+    state->prev = m->prev & btn;
+    state->press = m->press & btn;
+    state->rel = m->rel & btn;
+}
 
+static bool allow_override_firing_prev = false;
+static bool allow_override_firing = false;
+static u32 fire_button = 0;
+
+#define MOUSE_FIRE_BIT (1 << (fire_button - 1))
+
+RECOMP_HOOK("Player_Update") void pre_Player_UpdateCommon(Player* this, PlayState* play) {
     Input* input = CONTROLLER1(&play->state);
     // Kafei Prevention:
     if (this->actor.id != ACTOR_PLAYER) {
         return;
     }
-    // recomp_printf("player->state1 = %08X", this->stateFlags1);
+
+    fire_button = recomp_get_config_u32("first-person-fire-button");
+    MouseState_Update(&mouseBtnState);
+    allow_override_firing = ShouldAllowOverrideFiring(this, play);
     // Checking if we need to do anything.
-    if (ShouldAllowBFiring(this, play)) { 
-        BtnState_Record(input, &btnStateB, BTN_B, true);
+    if (allow_override_firing) { 
+
+        if (fire_button) {
+            // recomp_printf("Mouse Record\n");
+            BtnState_MouseRecord(&mouseBtnState, &btnStateFire, MOUSE_FIRE_BIT);
+        } else {
+            BtnState_Record(input, &btnStateFire, BTN_B, true);
+        }
+        
         EquipSlot spoof_button = EQUIP_SLOT_NONE;
         for (EquipSlot i = EQUIP_SLOT_B; i <= EQUIP_SLOT_C_RIGHT; i++) {
             u8 equippedItem = gSaveContext.save.saveInfo.equips.buttonItems[0][i];
@@ -173,18 +179,35 @@ RECOMP_HOOK("Player_Update") void pre_Player_UpdateCommon(Player* this, PlayStat
             }
         }
 
-        if (btnStateB.press) {
+        if (btnStateFire.press) {
             input->press.button |= slot_to_btn_id[spoof_button];
         }
-        if (btnStateB.cur) {
+        if (btnStateFire.cur) {
             input->cur.button |= slot_to_btn_id[spoof_button];
         }
-        if (btnStateB.prev) {
+        if (btnStateFire.prev) {
             input->prev.button |= slot_to_btn_id[spoof_button];
         }
-        if (btnStateB.rel) {
+        if (btnStateFire.rel) {
             input->rel.button |= slot_to_btn_id[spoof_button];
         }
 
     }
+
+    if (!allow_override_firing_prev && allow_override_firing) {
+        u32 mouse_mask = ~MOUSE_FIRE_BIT;
+        recomp_printf("Setting Mouse Mask to %08X\n", mouse_mask);
+        zelda64_set_mouse_button_mask(mouse_mask);
+
+    } else if (allow_override_firing_prev && !allow_override_firing) {
+        u32 mouse_mask = ~0;
+        recomp_printf("Setting Mouse Mask to %08X\n", mouse_mask);
+        zelda64_set_mouse_button_mask(mouse_mask);
+    }
+
+    allow_override_firing_prev = allow_override_firing;
 }
+
+// RECOMP_CALLBACK("*", recomp_on_play_update) void update_mouse_mask(PlayState* play){
+
+// }

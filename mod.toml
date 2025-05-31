@@ -5,13 +5,13 @@
 
 # Unique ID of this mod. Pick something long enough that it'll never be the same as any other mod.
 # The name displayed in the mod management menu is separate from this so this doesn't need to be human readable.
-id = "mm_recomp_mod_template"
+id = "mm_enhanced_mouse_controls"
 
 # Version of this mod.
 version = "1.0.0"
 
 # The name that will show up for this mod in the mod menu. This should be human readable.
-display_name = "Always Spin Attack"
+display_name = "Enhanced Mouse Controls"
 
 # The description that will show up when this mod is displayed in the mod menu. This should be human readable.
 description =  """
@@ -52,7 +52,7 @@ native_libraries = [
 elf_path = "build/mod.elf"
 
 # Output mod filename.
-mod_filename = "mm_recomp_mod_template"
+mod_filename = "mm_enhanced_mouse_controls"
 
 # Reference symbol files.
 func_reference_syms_file = "Zelda64RecompSyms/mm.us.rev1.syms.toml"
@@ -63,7 +63,7 @@ additional_files = [ ]
 
 
 [[manifest.config_options]]
-id = "bow-fire-with-b"
+id = "first-person-bow-control"
 name = "Fire the Bow with B"
 description = """
 The Bow can be optionally be fired with the R button, overriding shielding behavior.
@@ -77,7 +77,7 @@ options = ["Off", "First Person", "Aiming", "Holding"]
 default = "Off"
 
 [[manifest.config_options]]
-id = "hookshot-fire-with-b"
+id = "first-person-hookshot-control"
 name = "Fire the Hookshot with B"
 description = """
 The Hookshot can be optionally be fired with the B button.
@@ -89,3 +89,11 @@ Holding - The Hookshot can be fired with B as long as it is being held. Put it a
 type = "Enum"
 options = ["Off", "First Person", "Aiming", "Holding"]
 default = "Off"
+
+[[manifest.config_options]]
+id = "first-person-fire-button"
+name = "First Person Bow Button"
+description = """Something"""
+type = "Enum"
+options = [ "B", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8" ]
+default = "B"
