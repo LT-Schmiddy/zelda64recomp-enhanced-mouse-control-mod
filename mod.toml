@@ -61,29 +61,31 @@ data_reference_syms_files = [ "Zelda64RecompSyms/mm.us.rev1.datasyms.toml", "Zel
 # Additional files to include in the mod.
 additional_files = [ ]
 
+
 [[manifest.config_options]]
-id = "enum_option"
-name = "Enum Option"
-description = "Test enum config option"
+id = "bow-fire-with-b"
+name = "Fire the Bow with B"
+description = """
+The Bow can be optionally be fired with the R button, overriding shielding behavior.
+Off - Feature Disabled
+First Person - The Bow is only fired using B when in first person aiming.
+Aiming - The Bow is only fired using B when it is being aimed, through first-person or lock-on. 
+Holding - The Bow can be fired with B as long as it is being held. Put it away (or draw your sword) to resume sword behavior.
+"""
 type = "Enum"
-options = [ "First", "Second" ]
-default = "First"
+options = ["Off", "First Person", "Aiming", "Holding"]
+default = "Off"
 
 [[manifest.config_options]]
-id = "number_option"
-name = "Number Option"
-description = "Test number config option."
-type = "Number"
-min = 0
-max = 10
-step = 0.1
-precision = 1
-percent = false
-default = 1
-
-[[manifest.config_options]]
-id = "string_option"
-name = "String Option"
-description = "Test string config option."
-type = "String"
-default = "Lorem Ipsum"
+id = "hookshot-fire-with-b"
+name = "Fire the Hookshot with B"
+description = """
+The Hookshot can be optionally be fired with the B button.
+Off - Feature Disabled
+First Person - The Hookshot is only fired using B when in first person aiming.
+Aiming - The Hookshot is only fired using B when it is being aimed, through first-person or lock-on.
+Holding - The Hookshot can be fired with B as long as it is being held. Put it away (or draw your sword) to resume sword behavior.
+"""
+type = "Enum"
+options = ["Off", "First Person", "Aiming", "Holding"]
+default = "Off"
